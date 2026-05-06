@@ -1,0 +1,27 @@
+{
+  "name": "seat-booking-app",
+  "version": "1.0.0",
+  "description": "Seat Reservation Lock System with Redis + PostgreSQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "demo:a":           "node demos/demo-scenario-a.js",
+    "demo:b":           "node demos/demo-scenario-b.js",
+    "demo:cap":         "node demos/demo-cap.js",
+    "demo:indexing":    "node demos/demo-indexing.js",
+    "demo:crash":       "node demos/demo-redis-crash.js",
+    "demo:performance": "node demos/demo-performance.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ioredis": "^5.3.2",
+    "pg": "^8.12.0",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

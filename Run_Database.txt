@@ -1,0 +1,178 @@
+# Database Setup Guide (Seat Reservation System)
+
+## Objectives
+
+This file provides instructions on how to create and run a PostgreSQL database for your project.
+
+---
+
+# Requirements
+
+Before starting, you need:
+
+* PostgreSQL installed
+
+* pgAdmin (recommended)
+
+---
+
+# STEPS TO FOLLOW
+
+---
+
+## STEP 1: Create Database
+
+Open pgAdmin:
+
+1. Right-click on **Databases**
+
+2. Select **Create → Database**
+
+3. Enter the name:
+
+```
+seat_booking_db
+```
+
+4. Click **Save**
+
+---
+## STEP 2: Open Query Tool
+
+1. Click on the database `seat_booking_db`
+
+2. Click **Query Tool**
+
+---
+
+## STEP 3: Reset Database (IMPORTANT)
+
+Run this code first:
+
+```sql
+DROP SCHEMA public CASCADE;
+
+CREATE SCHEMA public;
+
+```
+
+Purpose:
+
+* Delete old data (if any)
+
+* Avoid data duplication errors
+
+---
+
+## STEP 4: Run Schema
+
+1. Open the `schema.sql` file
+
+2. Copy the entire content
+
+3. Paste it into the Query Tool
+
+4. Click **Execute (F5)**
+
+---
+
+## STEP 5: Run Seed Data
+
+1. Open the `seed.sql` file
+
+2. Copy the entire content
+
+3. Paste it into the Query Tool
+
+4. Click **Execute (F5)**
+
+---
+
+# CHECK RESULTS
+
+Run the following query:
+
+```sql
+SELECT COUNT(*) FROM seats;
+
+```
+
+Expected results:
+
+```
+100
+```
+
+---
+
+Continue running:
+
+```sql
+SELECT COUNT(*) FROM showtime_seats;
+```
+
+Result:
+
+```
+200
+```
+
+---
+
+# CHECK SEAT DATA
+
+```sql
+SELECT s.seat_code, sts.status, sts.price
+FROM showtime_seats sts
+JOIN seats s ON sts.seat_id = s.seat_id
+WHERE sts.showtime_id = 1
+ORDER BY s.row_label, s.column_number;
+```
+
+You will see:
+
+* AVAILABLE (seats empty)
+
+* BOOKED (seats reserved)
+
+---
+
+# COMMON ERRORS
+
+## "relation does not exist"
+
+Schema.sql not run
+
+---
+
+## Seed failed
+
+Run seed before schema
+
+---
+
+## Duplicate data
+
+Forgot to run the RESET step
+
+---
+
+# NOTES
+
+* PostgreSQL is used to store:
+
+* booking
+
+* ticket
+
+* BOOKED status
+
+* Redis (done later) is used for:
+
+* holding seats temporarily (HELD)
+
+* 5-minute timeout
+
+---
+
+# COMPLETE

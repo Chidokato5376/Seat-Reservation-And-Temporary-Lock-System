@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎬 Live Seat Map</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    #login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 15, 26, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .login-box {
+      background: #1a1a2e;
+      padding: 40px;
+      border-radius: 12px;
+      border: 1px solid #2a2a4a;
+      text-align: center;
+      width: 340px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-box h2 {
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      border: 1px solid #3a3a5a;
+      background: #12121f;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .login-box input:focus {
+      border-color: #e94560;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      background: #e94560;
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .login-box button:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f0f1a;
+      color: #fff;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #e94560;
+      margin-bottom: 6px;
+    }
+
+    /* ── Movie Selection ── */
+    .movie-card {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #2a2a4a;
+      padding-bottom: 20px;
+    }
+
+    .movie-poster {
+      width: 140px;
+      height: 200px;
+      background: #0f0f1a;
+      border: 1px solid #3a3a5a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .movie-info {
+      flex: 1;
+    }
+
+    .movie-title {
+      font-size: 22px;
+      color: #fff;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-transform: uppercase;
+    }
+
+    .age-tag {
+      background: #e67e22;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .time-btn {
+      background: #12121f;
+      border: 1px solid #3a3a5a;
+      color: #fff;
+      padding: 10px 20px;
+      margin: 0 10px 10px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .time-btn:hover {
+      border-color: #e94560;
+      color: #e94560;
+      background: rgba(233, 69, 96, 0.1);
+    }
+
+    #user-id-display {
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Screen ── */
+    .screen-wrap {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .screen {
+      display: inline-block;
+      background: linear-gradient(180deg, #e94560, #c0392b);
+      color: white;
+      padding: 10px 80px;
+      border-radius: 4px 4px 50% 50% / 4px 4px 20px 20px;
+      font-size: 13px;
+      letter-spacing: 6px;
+      box-shadow: 0 6px 30px rgba(233, 69, 96, 0.4);
+    }
+
+    /* ── Legend ── */
+    #legend {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .legend-box {
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+    }
+
+    /* ── Seat Grid ── */
+    #seat-map {
+      display: grid;
+      grid-template-columns: repeat(10, 48px);
+      gap: 7px;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+
+    .seat {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px 8px 4px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      border: none;
+      transition: transform 0.12s, opacity 0.2s;
+      outline: none;
+      position: relative;
+    }
+
+    .seat:hover:not(.booked) {
+      transform: scale(1.15);
+      z-index: 10;
+    }
+
+    .seat:active:not(.booked) {
+      transform: scale(0.95);
+    }
+
+    .seat.available {
+      background: #27ae60;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
+    }
+
+    .seat.held {
+      background: #e67e22;
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(230, 126, 34, 0.5);
+    }
+
+    .seat.booked {
+      background: #c0392b;
+      color: #fff;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .seat.mine {
+      background: #2980b9;
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(41, 128, 185, 0.5);
+    }
+
+    .seat .seat-label {
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .seat .countdown {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 1px;
+    }
+
+    /* Row labels */
+    #seat-map-wrapper {
+      position: relative;
+    }
+
+    /* ── Stats bar ── */
+    #stats {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 12px 22px;
+      text-align: center;
+      min-width: 90px;
+    }
+
+    .stat-box .num {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-box .lbl {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .stat-box.available .num {
+      color: #27ae60;
+    }
+
+    .stat-box.held .num {
+      color: #e67e22;
+    }
+
+    .stat-box.booked .num {
+      color: #e74c3c;
+    }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    button.action-btn {
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button.action-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    button.action-btn:active {
+      transform: translateY(0);
+    }
+
+    #simulate-btn {
+      background: #e94560;
+      color: #fff;
+    }
+
+    #simulate-btn:hover {
+      background: #c0392b;
+    }
+
+    #refresh-btn {
+      background: #2980b9;
+      color: #fff;
+    }
+
+    #refresh-btn:hover {
+      background: #1a6fa0;
+    }
+
+    #release-btn {
+      background: #7f8c8d;
+      color: #fff;
+      display: none;
+    }
+
+    #release-btn:hover {
+      background: #636e72;
+    }
+
+    /* ── Log ── */
+    #log-container {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #12121f;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    #log-header {
+      background: #1a1a2e;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #aaa;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    #log {
+      height: 160px;
+      overflow-y: auto;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-family: 'Consolas', monospace;
+      color: #bbb;
+    }
+
+    #log div {
+      margin-bottom: 4px;
+      border-bottom: 1px solid #1a1a2e;
+      padding-bottom: 4px;
+    }
+
+    #log .success {
+      color: #2ecc71;
+    }
+
+    #log .error {
+      color: #e74c3c;
+    }
+
+    #log .info {
+      color: #3498db;
+    }
+
+    #log .warn {
+      color: #e67e22;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #333;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: transform 0.3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #toast.success {
+      background: #27ae60;
+    }
+
+    #toast.error {
+      background: #c0392b;
+    }
+
+    #toast.warn {
+      background: #e67e22;
+    }
+
+    /* ── Admin Report Table ── */
+    #rpt-table-booked tbody tr,
+    #rpt-table-held   tbody tr {
+      border-bottom: 1px solid #1e1e30;
+      transition: background 0.15s;
+    }
+    #rpt-table-booked tbody tr:hover,
+    #rpt-table-held   tbody tr:hover {
+      background: #1a1a2e;
+    }
+    #rpt-table-booked td,
+    #rpt-table-held   td {
+      padding: 8px 10px;
+      color: #ccc;
+      white-space: nowrap;
+    }
+    .rpt-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .rpt-badge.paid    { background: #1e6a3e; color: #2ecc71; }
+    .rpt-badge.pending { background: #5a4000; color: #f39c12; }
+    .rpt-badge.failed  { background: #5a1515; color: #e74c3c; }
+    .rpt-tab.active    { background: #1a1a2e !important; color: #e74c3c !important; }
+  </style>
+</head>
+
+<body>
+  <!-- TOP BAR THÔNG TIN TÀI KHOẢN (Mặc định ẩn, chỉ hiện sau khi Login) -->
+  <div id="top-bar"
+    style="display: none; justify-content: space-between; align-items: center; background: #1a1a2e; padding: 12px 24px; border-bottom: 2px solid #e94560; margin-bottom: 20px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+    <div style="font-size: 16px;">
+      👋 Xin chào, <strong id="header-user-name" style="color: #3498db; letter-spacing: 1px;">--</strong>
+      <span id="header-user-role"
+        style="font-size: 12px; background: #e67e22; color: #fff; padding: 3px 8px; border-radius: 4px; margin-left: 10px; font-weight: bold;">Khách
+        hàng</span>
+    </div>
+    <button id="logout-btn"
+      style="background: #c0392b; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;">🚪
+      Đăng xuất</button>
+  </div>
+  <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>Đăng nhập Hệ thống</h2>
+      <!-- Sửa lại dòng này trong index.html -->
+      <p style="color: #aaa; font-size: 13px; margin-bottom: 20px;">
+        Khách: <strong>user1</strong>, <strong>user2</strong> | Quản trị: <strong>admin</strong>
+      </p>
+      <input type="text" id="username-input" placeholder="Nhập username..." value="user1" />
+      <button id="login-btn">Vào rạp 🍿</button>
+    </div>
+  </div>
+
+  <!-- 2. MÀN HÌNH CHỌN LỊCH CHIẾU -->
+  <div id="movie-selection-screen"
+    style="display: none; max-width: 900px; margin: 0 auto; padding: 20px; background: #1a1a2e; border-radius: 10px; margin-top: 30px;">
+    <div style="text-align: center; border-bottom: 2px solid #e94560; padding-bottom: 15px; margin-bottom: 25px;">
+      <h2 style="color: #fff; display: inline-block; background: #e94560; padding: 5px 20px; border-radius: 20px;">Lịch
+        chiếu | Giá vé</h2>
+    </div>
+    <div id="movies-list-container"></div>
+  </div>
+
+  <!-- 3. MÀN HÌNH CHÍNH (SƠ ĐỒ GHẾ) -->
+  <div id="main-app" style="display: none;">
+
+    <!-- Banner Phim -->
+    <div id="movie-banner"
+      style="text-align: center; margin-bottom: 25px; padding: 15px; background: #1a1a2e; border-radius: 8px; border: 1px solid #2a2a4a; position: relative;">
+      <button id="back-to-movies-btn"
+        style="position: absolute; top: 15px; left: 15px; background: #3a3a5a; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer;">⬅
+        Quay lại</button>
+      <h1 id="movie-title" style="color: #e94560; font-size: 28px; margin-bottom: 8px;">Đang tải tên phim...</h1>
+      <p style="color: #ccc; font-size: 14px; margin-bottom: 5px;">
+        <span id="cinema-name">--</span> | Phòng: <strong id="room-name" style="color:#3498db">--</strong> | <span
+          id="duration">--</span> phút
+      </p>
+      <p style="color: #888; font-size: 13px; margin-bottom: 10px;">
+        🍿 Thể loại: <span id="movie-genre" style="color:#fff">--</span> | 🌐 Ngôn ngữ: <span id="movie-language"
+          style="color:#fff">--</span> | 🔞 Độ tuổi: <strong id="movie-age" style="color:#e67e22">--</strong>
+      </p>
+      <p style="color: #2ecc71; font-weight: bold; font-size: 15px;" id="start-time">⏰ Giờ chiếu: --</p>
+    </div>
+
+    <!-- Thống kê -->
+    <div id="stats">
+      <div class="stat-box available">
+        <div class="num" id="cnt-available">–</div>
+        <div class="lbl">Trống</div>
+      </div>
+      <div class="stat-box held">
+        <div class="num" id="cnt-held">–</div>
+        <div class="lbl">Đang giữ</div>
+      </div>
+      <div class="stat-box booked">
+        <div class="num" id="cnt-booked">–</div>
+        <div class="lbl">Đã đặt</div>
+      </div>
+    </div>
+
+    <div class="screen-wrap">
+      <div class="screen">MÀN HÌNH</div>
+    </div>
+
+    <div id="legend">
+      <div class="legend-item">
+        <div class="legend-box" style="background:#27ae60"></div> Trống
+      </div>
+      <div class="legend-item">
+        <div class="legend-box" style="background:#2980b9"></div> Bạn đang giữ
+      </div>
+      <div class="legend-item">
+        <div class="legend-box" style="background:#e67e22"></div> Người khác giữ
+      </div>
+      <div class="legend-item">
+        <div class="legend-box" style="background:#c0392b"></div> Đã đặt
+      </div>
+    </div>
+
+    <!-- Map & Buttons -->
+    <div id="seat-map"></div>
+
+    <div class="btn-row">
+      <button class="action-btn" id="refresh-btn">🔄 Làm mới</button>
+      <button class="action-btn" id="simulate-btn">⚡ Giả lập 50 users</button>
+      <button class="action-btn" id="release-btn">🔓 Giải phóng ghế</button>
+      <button class="action-btn" id="admin-reset-btn" style="display:none; background: #8e44ad; color: #fff;">⚙️ Reset Suất chiếu</button>
+      <button class="action-btn" id="admin-report-btn" style="display:none; background: #16a085; color: #fff;">📋 Báo cáo Đặt vé</button>
+    </div>
+
+    <!-- ── ADMIN REPORT PANEL ── -->
+    <div id="admin-report-panel" style="display:none; max-width:960px; margin:0 auto 24px; background:#12121f; border:1px solid #2a2a4a; border-radius:10px; overflow:hidden;">
+      <!-- Header -->
+      <div style="background:#1a1a2e; padding:12px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #16a085;">
+        <span style="font-weight:700; font-size:15px; color:#16a085;">📋 Báo cáo Đặt vé — Suất chiếu #<span id="rpt-showtime-id">—</span></span>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button id="rpt-refresh-btn" style="background:#16a085; border:none; color:#fff; padding:6px 14px; border-radius:5px; cursor:pointer; font-size:13px;">🔄 Tải lại</button>
+          <button id="rpt-close-btn"   style="background:#555;    border:none; color:#fff; padding:6px 14px; border-radius:5px; cursor:pointer; font-size:13px;">✕ Đóng</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex; border-bottom:1px solid #2a2a4a;">
+        <button class="rpt-tab active" data-tab="booked"
+          style="flex:1; padding:10px; background:#1a1a2e; border:none; color:#e74c3c; font-weight:700; cursor:pointer; font-size:14px; border-bottom:3px solid #e74c3c;">
+          🔴 Đã đặt (<span id="rpt-cnt-booked">0</span>)
+        </button>
+        <button class="rpt-tab" data-tab="held"
+          style="flex:1; padding:10px; background:#12121f; border:none; color:#888; font-weight:700; cursor:pointer; font-size:14px; border-bottom:3px solid transparent;">
+          🟠 Đang giữ (<span id="rpt-cnt-held">0</span>)
+        </button>
+      </div>
+
+      <!-- Tab: BOOKED -->
+      <div id="rpt-tab-booked" style="overflow-x:auto; padding:12px;">
+        <table id="rpt-table-booked" style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#1a1a2e; color:#aaa; text-align:left;">
+              <th style="padding:8px 10px;">#</th>
+              <th style="padding:8px 10px;">Mã Booking</th>
+              <th style="padding:8px 10px;">Người đặt</th>
+              <th style="padding:8px 10px;">Username</th>
+              <th style="padding:8px 10px;">Ghế</th>
+              <th style="padding:8px 10px;">Loại</th>
+              <th style="padding:8px 10px;">Mã vé</th>
+              <th style="padding:8px 10px;">Thanh toán</th>
+              <th style="padding:8px 10px;">Số tiền</th>
+              <th style="padding:8px 10px;">Trạng thái TT</th>
+              <th style="padding:8px 10px;">Thời gian</th>
+            </tr>
+          </thead>
+          <tbody id="rpt-body-booked"></tbody>
+        </table>
+        <p id="rpt-empty-booked" style="text-align:center; color:#555; padding:24px; display:none;">Chưa có vé nào được đặt.</p>
+      </div>
+
+      <!-- Tab: HELD -->
+      <div id="rpt-tab-held" style="overflow-x:auto; padding:12px; display:none;">
+        <table id="rpt-table-held" style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="background:#1a1a2e; color:#aaa; text-align:left;">
+              <th style="padding:8px 10px;">#</th>
+              <th style="padding:8px 10px;">Ghế</th>
+              <th style="padding:8px 10px;">Loại</th>
+              <th style="padding:8px 10px;">Đang giữ bởi</th>
+              <th style="padding:8px 10px;">Giá</th>
+              <th style="padding:8px 10px;">Giữ lúc</th>
+              <th style="padding:8px 10px;">Hết hạn lúc</th>
+              <th style="padding:8px 10px;">Còn lại</th>
+            </tr>
+          </thead>
+          <tbody id="rpt-body-held"></tbody>
+        </table>
+        <p id="rpt-empty-held" style="text-align:center; color:#555; padding:24px; display:none;">Không có ghế nào đang bị giữ.</p>
+      </div>
+    </div>
+
+    <div id="log-container">
+      <div id="log-header">
+        <span>📋 Activity Log</span>
+        <span id="ws-status" style="color:#27ae60">● WebSocket connected</span>
+      </div>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <!-- 4. MODAL THANH TOÁN -->
+  <div id="payment-modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center;">
+    <div
+      style="background: #1a1a2e; padding: 30px; border-radius: 10px; width: 350px; text-align: center; border: 1px solid #e94560; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+      <h2 style="color: #fff; margin-bottom: 15px;">Xác nhận Thanh toán</h2>
+      <p style="color:#ccc; font-size: 14px;">Ghế đang chọn: <strong id="modal-seat-code"
+          style="color:#3498db; font-size: 18px;">--</strong></p>
+      <p style="color:#ccc; margin-bottom: 20px;">Tổng tiền: <strong id="modal-price"
+          style="color:#2ecc71; font-size: 24px;">0đ</strong></p>
+      <div style="text-align: left; margin-bottom: 20px;">
+        <label style="color: #aaa; font-size: 13px; margin-bottom: 5px; display: block;">Phương thức thanh toán:</label>
+        <select id="payment-method-select"
+          style="width: 100%; padding: 12px; border-radius: 5px; background: #0f0f1a; color: white; border: 1px solid #3a3a5a; outline:none; font-size: 15px;">
+          <option value="CREDIT_CARD">💳 Thẻ Tín Dụng (Credit Card)</option>
+          <option value="MOMO">🟣 Ví điện tử MoMo</option>
+          <option value="VNPAY">🔵 Cổng VNPay</option>
+          <option value="CASH">💵 Tiền mặt tại quầy</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button id="cancel-payment-btn"
+          style="flex: 1; padding: 12px; border-radius: 5px; border: none; background: #555; color: white; cursor: pointer;">Hủy</button>
+        <button id="confirm-payment-btn"
+          style="flex: 1; padding: 12px; border-radius: 5px; border: none; background: #e94560; color: white; cursor: pointer;">Thanh
+          toán</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- Phần <script> của bạn bắt đầu từ đây... -->
+
+  <script>
+    // ── Config & State ────────────────────────────
+    let SHOWTIME_ID = 1;
+    let ME = null;
+    let ME_NAME = '';
+    let IS_ADMIN = false;
+
+    let seatsData = [];
+    let myLockedSeats = new Set();
+    let countdownTimers = {};
+    let isSimulating = false; // Lính gác chống Click ma
+
+    // ── WebSocket (Khóa tự động kết nối) ──────────
+    const socket = io({ autoConnect: false });
+
+    // ── Login Logic ───────────────────────────────
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const username = document.getElementById('username-input').value.trim();
+      if (!username) { alert('Vui lòng nhập username'); return; }
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          ME = data.user.user_id;
+          ME_NAME = data.user.full_name;
+
+          // MỚI: Gán cờ IS_ADMIN dựa trên role trả về
+          IS_ADMIN = (data.user.role === 'admin');
+
+          document.getElementById('login-screen').style.display = 'none';
+          // MỚI THÊM: Top Bar và thông tin tài khoản
+          document.getElementById('top-bar').style.display = 'flex';
+          document.getElementById('header-user-name').textContent = ME_NAME;
+          document.getElementById('header-user-role').textContent = IS_ADMIN ? 'Quản trị viên' : 'Khách hàng';
+          document.getElementById('header-user-role').style.background = IS_ADMIN ? '#8e44ad' : '#e67e22';
+          // PHÂN QUYỀN GIAO DIỆN NÚT BẤM
+          if (IS_ADMIN) {
+            document.getElementById('admin-reset-btn').style.display  = 'inline-block';
+            document.getElementById('admin-report-btn').style.display = 'inline-block';
+            document.getElementById('simulate-btn').style.display     = 'none';
+          } else {
+            document.getElementById('admin-reset-btn').style.display  = 'none';
+            document.getElementById('admin-report-btn').style.display = 'none';
+            document.getElementById('simulate-btn').style.display     = 'inline-block';
+          }
+
+          // Chuyển sang màn hình chọn phim
+          renderMovieSelection();
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Lỗi kết nối tới server!');
+      }
+    });
+
+    // ── Init App (Chạy sau khi Login) ──────────────
+    function initApp() {
+      socket.connect();
+
+      socket.on('connect', () => {
+        socket.emit('join:showtime', SHOWTIME_ID);
+        document.getElementById('ws-status').textContent = '● WebSocket connected';
+        document.getElementById('ws-status').style.color = '#27ae60';
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('ws-status').textContent = '● WebSocket disconnected';
+        document.getElementById('ws-status').style.color = '#e74c3c';
+      });
+
+      socket.on('seat:update', (data) => {
+        // MỚI: Nếu là lệnh RESET từ Admin
+        if (data.type === 'RESET') {
+          showToast('🛠️ Admin vừa khôi phục gốc toàn bộ ghế!', 'warn');
+          myLockedSeats.clear();
+          showReleaseBtn();
+          loadSeats(); // Tải lại toàn bộ phòng
+          return;
+        }
+
+        // Cũ: Xử lý đổi màu ghế từng cái một
+        updateSeatUI(data.seatId, data.status, data.expiresAt, data.userId);
+        const label = data.status === 'HELD'
+          ? `⏳ Ghế ${data.seatId} bị giữ bởi ${data.userId}`
+          : data.status === 'BOOKED'
+            ? `🔴 Ghế ${data.seatId} đã được đặt`
+            : `🟢 Ghế ${data.seatId} vừa được giải phóng`;
+        addLog(label, data.status === 'BOOKED' ? 'error' : data.status === 'HELD' ? 'warn' : 'success');
+        updateStats();
+      });
+
+      loadShowtimeInfo();
+      loadSeats();
+    }
+
+
+
+    // ── Load & Render Seats ───────────────────────
+    async function loadSeats() {
+      try {
+        const res = await fetch(`/api/seats/${SHOWTIME_ID}`);
+        seatsData = await res.json();
+        renderSeats();
+        updateStats();
+        addLog(`Đã tải ${seatsData.length} ghế cho Showtime ${SHOWTIME_ID}`, 'info');
+      } catch (err) {
+        addLog(`Lỗi tải dữ liệu: ${err.message}`, 'error');
+      }
+    }
+
+    function renderSeats() {
+      const map = document.getElementById('seat-map');
+      map.innerHTML = '';
+
+      seatsData.forEach(seat => {
+        const numId = Number(seat.seat_id);
+        const isMine = myLockedSeats.has(numId);
+        const status = isMine ? 'mine' : seat.status.toLowerCase();
+
+        const btn = document.createElement('button');
+        btn.className = `seat ${status}`;
+        btn.id = `seat-${numId}`;
+        btn.dataset.seatId = numId;
+        btn.dataset.seatCode = seat.seat_code;
+        btn.dataset.status = seat.status;
+        btn.dataset.expiresAt = seat.expiresAt || '';
+
+        btn.innerHTML = `
+      <span class="seat-label">${seat.seat_code}</span>
+      <span class="countdown" id="cd-${numId}"></span>
+    `;
+
+        btn.title = seat.status === 'BOOKED'
+          ? `${seat.seat_code} — Đã đặt`
+          : seat.status === 'HELD'
+            ? `${seat.seat_code} — Đang bị giữ`
+            : `${seat.seat_code} — ${seat.seat_type} | ${seat.price?.toLocaleString()}đ`;
+
+        btn.addEventListener('click', () => handleSeatClick(numId, btn.dataset.status));
+        map.appendChild(btn);
+
+        if (seat.status === 'HELD' && seat.expiresAt) {
+          startCountdown(numId, Number(seat.expiresAt));
+        }
+      });
+    }
+
+    // ── Update single seat UI ─────────────────────
+    function updateSeatUI(seatId, status, expiresAt, heldBy) {
+      const id = Number(seatId);
+      const btn = document.getElementById(`seat-${id}`);
+      if (!btn) return;
+
+      const isMine = myLockedSeats.has(id);
+      const cssClass = (status === 'HELD' && isMine) ? 'mine'
+        : status.toLowerCase();
+
+      btn.className = `seat ${cssClass}`;
+      btn.dataset.status = status;
+      btn.dataset.expiresAt = expiresAt || '';
+
+      if (status === 'HELD' && expiresAt) {
+        startCountdown(seatId, Number(expiresAt));
+      } else {
+        stopCountdown(seatId);
+        const cd = document.getElementById(`cd-${seatId}`);
+        if (cd) cd.textContent = '';
+      }
+
+      const idx = seatsData.findIndex(s => Number(s.seat_id) === id);
+      if (idx >= 0) {
+        seatsData[idx].status = status;
+        seatsData[idx].expiresAt = expiresAt;
+        seatsData[idx].heldBy = heldBy;
+      }
+    }
+
+    // ── Countdown timer ───────────────────────────
+    function startCountdown(seatId, expiresAt) {
+      stopCountdown(seatId);
+      countdownTimers[seatId] = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+        const cd = document.getElementById(`cd-${seatId}`);
+        if (cd) cd.textContent = remaining > 0 ? `${remaining}s` : '';
+        if (remaining === 0) {
+          stopCountdown(seatId);
+          if (myLockedSeats.has(Number(seatId))) {
+            myLockedSeats.delete(Number(seatId));
+            showReleaseBtn();
+            addLog(`⏰ Lock ghế ${seatId} đã hết hạn`, 'warn');
+          }
+          updateSeatUI(seatId, 'AVAILABLE');
+          updateStats();
+        }
+      }, 1000);
+    }
+
+    function stopCountdown(seatId) {
+      clearInterval(countdownTimers[seatId]);
+      delete countdownTimers[seatId];
+    }
+
+    async function loadShowtimeInfo() {
+      try {
+        const res = await fetch(`/api/seats/info/${SHOWTIME_ID}`);
+        const data = await res.json();
+        if (data.error) return;
+
+        document.getElementById('movie-title').textContent = data.title;
+        document.getElementById('cinema-name').textContent = data.cinema_name;
+        document.getElementById('room-name').textContent = data.auditorium_name;
+        document.getElementById('duration').textContent = data.duration_minutes;
+
+        // Đổ thêm thông tin mới
+        document.getElementById('movie-genre').textContent = data.genre;
+        document.getElementById('movie-language').textContent = data.language;
+        document.getElementById('movie-age').textContent = data.age_rating;
+
+        const timeStr = new Date(data.start_time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+        document.getElementById('start-time').textContent = `⏰ Giờ chiếu: ${timeStr}`;
+      } catch (err) { console.error('Lỗi tải thông tin phim:', err); }
+    }
+
+    let pendingSeatIdToBook = null; // Biến tạm lưu ID ghế đang chờ thanh toán
+
+    async function handleSeatClick(seatId, currentStatus) {
+      if (IS_ADMIN) {
+        showToast('🛡️ Admin chỉ có thể xem sơ đồ và Reset, không thể đặt vé!', 'warn');
+        return;
+      }
+      const id = Number(seatId);
+      if (currentStatus === 'BOOKED') { showToast('Ghế này đã được đặt', 'error'); return; }
+
+      if (myLockedSeats.has(id)) {
+        // THAY ĐỔI: Không gọi bookSeat(id) nữa, mà bật Modal lên!
+        const seatInfo = seatsData.find(s => Number(s.seat_id) === id);
+        document.getElementById('modal-seat-code').textContent = seatInfo.seat_code;
+        document.getElementById('modal-price').textContent = Number(seatInfo.price).toLocaleString() + 'đ';
+        pendingSeatIdToBook = id;
+
+        document.getElementById('payment-modal').style.display = 'flex';
+        return;
+      }
+      await lockSeat(id);
+    }
+
+    async function lockSeat(seatId) {
+      const id = Number(seatId);
+      try {
+        const res = await fetch('/api/seats/lock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId: id, userId: ME }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          myLockedSeats.add(id);
+          updateSeatUI(id, 'HELD', data.expiresAt, ME);
+          showReleaseBtn();
+          showToast(`Đã giữ ghế ${seatId} — 30 giây`, 'success');
+          addLog(`✅ Bạn giữ ghế ${seatId}. Click lại để đặt chính thức`, 'success');
+        } else {
+          showToast(data.message, 'error');
+          addLog(`❌ Ghế ${seatId}: ${data.message}`, 'error');
+        }
+      } catch (err) {
+        addLog(`Lỗi: ${err.message}`, 'error');
+      }
+    }
+
+    // ── Admin Reset Lịch Chiếu ─────────────────────
+    document.getElementById('admin-reset-btn').addEventListener('click', async () => {
+      if (!confirm('⚠️ BẠN CÓ CHẮC CHẮN MỐN RESET? Toàn bộ vé đã bán của phim này sẽ bị xóa!')) return;
+
+      try {
+        const res = await fetch('/api/seats/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          addLog('🛠️ Admin đã khôi phục gốc sơ đồ ghế!', 'warn');
+        }
+      } catch (err) {
+        console.error('Lỗi reset:', err);
+      }
+    });
+
+    document.getElementById('cancel-payment-btn').addEventListener('click', () => {
+      document.getElementById('payment-modal').style.display = 'none';
+      pendingSeatIdToBook = null;
+    });
+
+    document.getElementById('confirm-payment-btn').addEventListener('click', async () => {
+      if (!pendingSeatIdToBook) return;
+      const paymentMethod = document.getElementById('payment-method-select').value;
+
+      // Gọi hàm bookSeat kèm theo paymentMethod
+      await bookSeat(pendingSeatIdToBook, paymentMethod);
+
+      // Đóng modal
+      document.getElementById('payment-modal').style.display = 'none';
+      pendingSeatIdToBook = null;
+    });
+
+    async function bookSeat(seatId, paymentMethod) {
+      const id = Number(seatId);
+      try {
+        const res = await fetch('/api/seats/book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId: id, userId: ME, paymentMethod }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          myLockedSeats.delete(id);
+          updateSeatUI(id, 'BOOKED');
+          showReleaseBtn();
+          showToast(`🎟 Đặt vé thành công! Mã: ${data.bookingCode}`, 'success');
+          addLog(`🎟 Thanh toán ${paymentMethod} thành công — Mã vé: ${data.bookingCode}`, 'success');
+        } else {
+          myLockedSeats.delete(id);
+          updateSeatUI(id, 'AVAILABLE');
+          showReleaseBtn();
+          showToast(data.message || 'Đặt ghế thất bại', 'error');
+        }
+      } catch (err) { addLog(`Lỗi: ${err.message}`, 'error'); }
+    }
+
+    // ── Màn hình Chọn Phim ────────────────────────
+    async function renderMovieSelection() {
+      document.getElementById('movie-selection-screen').style.display = 'block';
+      document.getElementById('main-app').style.display = 'none';
+
+      try {
+        const res = await fetch('/api/seats/showtimes/list');
+        const data = await res.json();
+
+        // Nhóm dữ liệu theo Phim
+        const moviesMap = {};
+        data.forEach(row => {
+          if (!moviesMap[row.movie_id]) {
+            moviesMap[row.movie_id] = { title: row.title, age: row.age_rating, showtimes: [] };
+          }
+          moviesMap[row.movie_id].showtimes.push({ id: row.showtime_id, time: row.start_time });
+        });
+
+        const container = document.getElementById('movies-list-container');
+        container.innerHTML = '';
+
+        // Tạo HTML cho từng Phim
+        Object.values(moviesMap).forEach(movie => {
+          let timesHtml = movie.showtimes.map(st => {
+            const timeStr = new Date(st.time).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            return `<button class="time-btn" onclick="goToSeatSelection(${st.id})">${timeStr}</button>`;
+          }).join('');
+
+          container.innerHTML += `
+        <div class="movie-card">
+          <div class="movie-poster">Ảnh Poster<br>${movie.title}</div>
+          <div class="movie-info">
+            <h3 class="movie-title">${movie.title} <span class="age-tag">${movie.age}</span></h3>
+            <div style="font-weight: bold; color: #888; margin-bottom: 10px; font-size: 14px;">2D Phụ Đề Anh</div>
+            <div>${timesHtml}</div>
+          </div>
+        </div>
+      `;
+        });
+      } catch (err) { console.error("Lỗi tải danh sách phim", err); }
+    }
+
+    // Hàm chuyển từ Màn hình Phim -> Sơ đồ Ghế
+    function goToSeatSelection(showtimeId) {
+      SHOWTIME_ID = showtimeId;
+      document.getElementById('movie-selection-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+
+      initApp(); // Khởi tạo Websocket và load sơ đồ ghế
+    }
+
+    // Xử lý nút Quay lại
+    document.getElementById('back-to-movies-btn').addEventListener('click', async () => {
+      await releaseAllMyLocks(); // Nhả ghế nếu đang giữ
+      socket.disconnect(); // Ngắt kết nối phòng hiện tại
+      renderMovieSelection();
+    });
+
+    async function releaseAllMyLocks() {
+      for (const seatId of myLockedSeats) {
+        await fetch('/api/seats/release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId, userId: ME }),
+        });
+        updateSeatUI(seatId, 'AVAILABLE');
+        addLog(`🔓 Giải phóng ghế ${seatId}`, 'info');
+      }
+      myLockedSeats.clear();
+      showReleaseBtn();
+    }
+
+    function showReleaseBtn() {
+      document.getElementById('release-btn').style.display =
+        myLockedSeats.size > 0 ? 'inline-block' : 'none';
+    }
+
+    // ── Simulate 50 users (ĐÃ FIX CHỐNG CLICK MA) ──
+    document.getElementById('simulate-btn').addEventListener('click', async (e) => {
+      // 1. Chặn đứng click thứ 2 lọt vào
+      if (isSimulating) return;
+      // 2. Sập cửa khóa lại ngay lập tức
+      isSimulating = true;
+
+      const btn = e.target;
+      btn.disabled = true;
+      btn.textContent = "⏳ Đang xử lý 50 requests...";
+
+      try {
+        const available = seatsData.filter(s => s.status === 'AVAILABLE');
+        if (!available.length) {
+          showToast('Không còn ghế trống để giả lập!', 'warn');
+          return;
+        }
+
+        const target = available[Math.floor(Math.random() * available.length)];
+        addLog(`🚀 50 users đồng thời tranh ghế ${target.seat_code}...`, 'info');
+
+        const users = Array.from({ length: 50 }, (_, i) => `sim_${i}_${Date.now()}`);
+        const results = await Promise.all(users.map(uid =>
+          fetch('/api/seats/lock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId: target.seat_id, userId: uid }),
+          }).then(r => r.json()).then(d => ({ uid, ...d }))
+        ));
+
+        const winner = results.find(r => r.success);
+        const losers = results.filter(r => !r.success).length;
+
+        addLog(`🏆 SETNX winner: ${winner?.uid || 'không ai'}`, 'success');
+        addLog(`❌ ${losers}/50 nhận "Ghế đã bị giữ bởi người khác"`, 'error');
+        addLog(`✔ Chứng minh tính atomic của Redis SETNX`, 'info');
+
+        setTimeout(() => updateStats(), 500);
+
+      } finally {
+        // 3. Mở khóa lại sau khi đã chạy xong toàn bộ
+        isSimulating = false;
+        btn.disabled = false;
+        btn.textContent = "⚡ Giả lập 50 users cùng lúc";
+      }
+    });
+
+    // ── Refresh & Release Buttons ──────────────────
+    document.getElementById('refresh-btn').addEventListener('click', loadSeats);
+    document.getElementById('release-btn').addEventListener('click', releaseAllMyLocks);
+
+    // ── Helper: Cập nhật thống kê ──────────────────
+    function updateStats() {
+      const counts = { available: 0, held: 0, booked: 0 };
+      document.querySelectorAll('.seat').forEach(btn => {
+        const s = btn.dataset.status?.toLowerCase();
+        if (s === 'available') counts.available++;
+        else if (s === 'held') counts.held++;
+        else if (s === 'booked') counts.booked++;
+      });
+      document.getElementById('cnt-available').textContent = counts.available;
+      document.getElementById('cnt-held').textContent = counts.held;
+      document.getElementById('cnt-booked').textContent = counts.booked;
+    }
+
+    // ── Helper: Log & Toast ────────────────────────
+    function addLog(msg, type = '') {
+      const log = document.getElementById('log');
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    let toastTimer;
+    function showToast(msg, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `show ${type}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.className = '', 3000);
+    }
+    // ── Admin Report Panel ─────────────────────────
+    document.getElementById('admin-report-btn').addEventListener('click', () => {
+      const panel = document.getElementById('admin-report-panel');
+      const isVisible = panel.style.display !== 'none';
+      if (isVisible) {
+        panel.style.display = 'none';
+      } else {
+        panel.style.display = 'block';
+        loadAdminReport();
+      }
+    });
+
+    document.getElementById('rpt-refresh-btn').addEventListener('click', loadAdminReport);
+    document.getElementById('rpt-close-btn').addEventListener('click', () => {
+      document.getElementById('admin-report-panel').style.display = 'none';
+    });
+
+    // Tab switching
+    document.querySelectorAll('.rpt-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.rpt-tab').forEach(t => {
+          t.classList.remove('active');
+          t.style.borderBottomColor = 'transparent';
+          t.style.color = '#888';
+          t.style.background = '#12121f';
+        });
+        tab.classList.add('active');
+        tab.style.borderBottomColor = '#e74c3c';
+        tab.style.color = '#e74c3c';
+        tab.style.background = '#1a1a2e';
+
+        document.getElementById('rpt-tab-booked').style.display = tab.dataset.tab === 'booked' ? 'block' : 'none';
+        document.getElementById('rpt-tab-held').style.display   = tab.dataset.tab === 'held'   ? 'block' : 'none';
+      });
+    });
+
+    async function loadAdminReport() {
+      document.getElementById('rpt-showtime-id').textContent = SHOWTIME_ID;
+      document.getElementById('rpt-body-booked').innerHTML = '<tr><td colspan="11" style="text-align:center;color:#555;padding:20px;">Đang tải...</td></tr>';
+      document.getElementById('rpt-body-held').innerHTML   = '<tr><td colspan="8"  style="text-align:center;color:#555;padding:20px;">Đang tải...</td></tr>';
+
+      try {
+        const res  = await fetch(`/api/seats/admin/report/${SHOWTIME_ID}`);
+        const data = await res.json();
+
+        // ── Render BOOKED tab ──
+        document.getElementById('rpt-cnt-booked').textContent = data.booked.length;
+        const tbody = document.getElementById('rpt-body-booked');
+        tbody.innerHTML = '';
+
+        if (!data.booked.length) {
+          tbody.innerHTML = '';
+          document.getElementById('rpt-empty-booked').style.display = 'block';
+        } else {
+          document.getElementById('rpt-empty-booked').style.display = 'none';
+          data.booked.forEach((row, i) => {
+            const payBadge = row.payment_status === 'PAID'
+              ? `<span class="rpt-badge paid">✔ PAID</span>`
+              : row.payment_status === 'PENDING'
+              ? `<span class="rpt-badge pending">PENDING</span>`
+              : `<span class="rpt-badge failed">FAILED</span>`;
+
+            const payIcon = {
+              CREDIT_CARD: '💳',
+              MOMO: '🟣',
+              VNPAY: '🔵',
+              CASH: '💵',
+            }[row.payment_method] || '💳';
+
+            const confirmedAt = row.confirmed_at
+              ? new Date(row.confirmed_at).toLocaleString('vi-VN')
+              : '—';
+
+            tbody.innerHTML += `
+              <tr>
+                <td style="color:#555;">${i + 1}</td>
+                <td style="color:#3498db; font-weight:700;">${row.booking_code}</td>
+                <td style="color:#fff;">${row.full_name || '—'}</td>
+                <td style="color:#888;">${row.username}</td>
+                <td style="color:#f1c40f; font-weight:700;">${row.seat_code}</td>
+                <td style="color:#888;">${row.seat_type}</td>
+                <td style="color:#9b59b6; font-family:monospace;">${row.ticket_code}</td>
+                <td>${payIcon} ${row.payment_method || '—'}</td>
+                <td style="color:#2ecc71;">${Number(row.seat_price).toLocaleString('vi-VN')}đ</td>
+                <td>${payBadge}</td>
+                <td style="color:#888; font-size:12px;">${confirmedAt}</td>
+              </tr>`;
+          });
+        }
+
+        // ── Render HELD tab ──
+        document.getElementById('rpt-cnt-held').textContent = data.held.length;
+        const tbodyHeld = document.getElementById('rpt-body-held');
+        tbodyHeld.innerHTML = '';
+
+        if (!data.held.length) {
+          tbodyHeld.innerHTML = '';
+          document.getElementById('rpt-empty-held').style.display = 'block';
+        } else {
+          document.getElementById('rpt-empty-held').style.display = 'none';
+          data.held
+            .sort((a, b) => a.ttl_seconds - b.ttl_seconds)
+            .forEach((row, i) => {
+              const lockedAt  = row.locked_at  ? new Date(row.locked_at).toLocaleTimeString('vi-VN')  : '—';
+              const expiresAt = row.expires_at ? new Date(row.expires_at).toLocaleTimeString('vi-VN') : '—';
+
+              const ttlColor = row.ttl_seconds < 60
+                ? '#e74c3c'
+                : row.ttl_seconds < 120
+                ? '#e67e22'
+                : '#2ecc71';
+
+              tbodyHeld.innerHTML += `
+                <tr>
+                  <td style="color:#555;">${i + 1}</td>
+                  <td style="color:#f1c40f; font-weight:700;">${row.seat_code}</td>
+                  <td style="color:#888;">${row.seat_type}</td>
+                  <td style="color:#3498db; font-family:monospace; font-size:12px;">${row.held_by}</td>
+                  <td style="color:#2ecc71;">${Number(row.price).toLocaleString('vi-VN')}đ</td>
+                  <td style="color:#888; font-size:12px;">${lockedAt}</td>
+                  <td style="color:#888; font-size:12px;">${expiresAt}</td>
+                  <td style="color:${ttlColor}; font-weight:700;">${row.ttl_seconds}s</td>
+                </tr>`;
+            });
+        }
+
+      } catch (err) {
+        document.getElementById('rpt-body-booked').innerHTML =
+          `<tr><td colspan="11" style="color:#e74c3c;text-align:center;padding:16px;">Lỗi: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ── Xử lý Đăng xuất ────────────────────────────
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      // 1. Nếu người dùng đang giữ ghế mà chưa mua, tự động nhả ra để rạp bán cho người khác
+      if (myLockedSeats && myLockedSeats.size > 0) {
+        await releaseAllMyLocks();
+      }
+
+      // 2. Ngắt kết nối phòng Websocket hiện tại
+      if (socket.connected) {
+        socket.disconnect();
+      }
+
+      // 3. Reset các biến lưu trữ cục bộ
+      ME = null;
+      ME_NAME = '';
+      IS_ADMIN = false;
+
+      // 4. Giấu toàn bộ màn hình App đi, bật lại màn hình Login
+      document.getElementById('top-bar').style.display           = 'none';
+      document.getElementById('movie-selection-screen').style.display = 'none';
+      document.getElementById('main-app').style.display          = 'none';
+      document.getElementById('admin-report-panel').style.display = 'none';
+      document.getElementById('login-screen').style.display      = 'flex';
+
+      // 5. Làm sạch ô nhập liệu username để người sau vào
+      document.getElementById('username-input').value = '';
+
+      showToast('👋 Đã đăng xuất thành công!', 'success');
+    });
+  </script>
+</body>
+
+</html>
