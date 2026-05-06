@@ -1,9 +1,8 @@
 # Seat-Reservation-And-Temporary-Lock-System
 This is the final report for the Advanced Database Project, create by group 3 from EP16A (National Economics University). Please contact me via address: tuannh2209@gmail.com if you want to know more information about this project.
 
-==========================================
 INSTALLATION
-==========================================
+=
 
 1. PostgreSQL: https://www.postgresql.org/download/windows/
 
@@ -23,11 +22,9 @@ INSTALLATION
 - Download node-v22.x.x-x64.msi file
 - Check command:    node -v     ===>        v22.x.x
                     npm -v      ===>        10.x.x
-
-===============================================
+  
 HOW TO EXECUTE THE PROJECT
-===============================================
-
+=
 1. Check requirement files:
 - Run Command Prompt
 - Enter: cd Downloads\seatbooking_database\seat-app
