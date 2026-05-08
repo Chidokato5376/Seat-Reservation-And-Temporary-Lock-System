@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 
 const { subscriber } = require('./src/db/redis');
+const authenticate = require('./src/middleware/authenticate');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,14 +21,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Routes ──────────────────────────────────
 app.use('/api/seats', require('./src/routes/seats'));
-// Auth routes
+// Thêm dòng này vào phần cấu hình routes trong server.js
 app.use('/api/auth', require('./src/routes/auth'));
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
 
 // ── Redis Pub/Sub → WebSocket broadcast ─────
-// When Redis receives a seat:status event, broadcast it to ALL connected clients
+// Khi Redis nhận event seat:status, broadcast tới TẤT CẢ clients đang xem
 subscriber.subscribe('seat:status', (err) => {
   if (err) console.error('[Redis PubSub] Subscribe error:', err.message);
   else console.log('[Redis PubSub] Subscribed to seat:status');
@@ -36,9 +37,14 @@ subscriber.subscribe('seat:status', (err) => {
 subscriber.on('message', (channel, message) => {
   try {
     const data = JSON.parse(message);
-    // Emit to all clients in the showtime room
+    // Xử lý batch booking
+    if (data.type === 'BATCH_BOOKED') {
+      io.to(`showtime:${data.showtimeId}`).emit('seat:update', data);
+      return;
+    }
+    // Emit tới tất cả clients trong room của showtime đó
     io.to(`showtime:${data.showtimeId}`).emit('seat:update', data);
-    // Also broadcast globally (useful for debugging / demo)
+    // Cũng emit broadcast toàn bộ (để debug / demo)
     // io.emit('seat:update', data);
   } catch (err) {
     console.error('[Redis PubSub] Parse error:', err.message);
@@ -49,14 +55,15 @@ subscriber.on('message', (channel, message) => {
 io.on('connection', (socket) => {
   console.log(`[WS] Client connected: ${socket.id}`);
 
-  // Client joins the specific showtime room
+  // Client join vào room của showtime cụ thể
+  // Client join vào room của showtime cụ thể
   socket.on('join:showtime', (showtimeId) => {
-    // 1. Leave all previous showtime rooms before joining the new one
+    // 1. Thoát tất cả các phòng showtime cũ trước khi vào phòng mới
     socket.rooms.forEach(room => {
       if (room.startsWith('showtime:')) socket.leave(room);
     });
 
-    // 2. Join the new room
+    // 2. Tham gia phòng mới
     socket.join(`showtime:${showtimeId}`);
     console.log(`[WS] ${socket.id} joined showtime:${showtimeId}`);
   });

@@ -46,9 +46,11 @@ HOW TO EXECUTE THE PROJECT
 - Open VSCode Terminal again
 - Enter: cd seat-app
 - Enter: npm install
+- Enter: npm install bcryptjs jsonwebtoken
+- Enter: node scripts/seed-users.js
+- Enter: npm run dev
 
 4. Execute Program
-- Run the SQL files with instructions in Run_Database.txt
 - After finished installing dependencies (30s - 1m), open VSCode Terminal again
 - Enter: cd seat-app
 - Enter: npm start

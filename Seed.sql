@@ -14,18 +14,21 @@ SELECT
     chr(65 + row_num),
     col_num,
     CASE 
-        WHEN row_num >= 7 THEN 'VIP'
-        WHEN row_num >= 5 THEN 'PREMIUM'
+		WHEN row_num = 9 THEN 'COUPLE'
+        WHEN row_num >= 6 THEN 'VIP'
+        WHEN row_num >= 4 THEN 'PREMIUM'
         ELSE 'STANDARD'
     END
 FROM generate_series(0, 9) AS row_num,   -- A–J
      generate_series(1, 10) AS col_num; -- 1–10
 
 -- 4. MOVIES
-INSERT INTO movies (title, duration_minutes, age_rating, genre, language, release_date)
+INSERT INTO movies (title, duration_minutes, age_rating, genre, language, release_date,poster_url)
 VALUES 
-('Avengers: Endgame', 181, 'PG-13', 'Action', 'English', '2019-04-26'),
-('The Dark Knight', 152, 'PG-13', 'Action', 'English', '2008-07-18');
+('Avengers: Endgame', 181, 'PG-13', 'Action', 'English', '2019-04-26',
+	'https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg'),
+('The Dark Knight', 152, 'PG-13', 'Action', 'English', '2008-07-18',
+	'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg');
 
 -- 5. SHOWTIMES
 INSERT INTO showtimes (movie_id, auditorium_id, start_time, end_time, base_price)
@@ -40,6 +43,7 @@ SELECT
     1,
     s.seat_id,
     CASE 
+		WHEN s.seat_type = 'COUPLE' THEN 150000
         WHEN s.seat_type = 'VIP' THEN 120000
         WHEN s.seat_type = 'PREMIUM' THEN 100000
         ELSE 80000
@@ -53,6 +57,7 @@ SELECT
     2,
     s.seat_id,
     CASE 
+		WHEN s.seat_type = 'COUPLE' THEN 150000
         WHEN s.seat_type = 'VIP' THEN 120000
         WHEN s.seat_type = 'PREMIUM' THEN 100000
         ELSE 80000
@@ -61,17 +66,17 @@ SELECT
 FROM seats s;
 
 -- 7. USERS
-INSERT INTO users (username, full_name, email, phone)
+INSERT INTO users (username, full_name, password_hash, email, phone)
 VALUES 
-('user1', 'Nguyen Van A', 'a@gmail.com', '0900000001'),
-('user2', 'Tran Thi B', 'b@gmail.com', '0900000002');
+('user1', 'Nguyen Binh An', '$2b$10$AYcxfGL9bsSnRd2fnlOfBOsd.E7CcktOtDj9uhR3hEkF.1JqO2OCG', 'a@gmail.com', '0900000001'),
+('user2', 'Le Thi Mai', '$2b$10$.lH299Gc6KBcjEJVXMS1u.W7gMs30GZvr6apMCRW2GUwxzGSLA8mm', 'm@gmail.com', '0900000002');
 
 -- 8. BOOKINGS (1 booking demo)
 INSERT INTO bookings (booking_code, user_id, showtime_id, total_amount, status, confirmed_at)
-VALUES ('BK001', 1, 1, 200000, 'CONFIRMED', NOW());
+VALUES ('BK001', 1, 1, 160000, 'CONFIRMED', NOW());
 
--- 9. TICKETS (seed pre-booked seats)
--- Select the first 2 seats of showtime 1
+-- 9. TICKETS (giả lập ghế đã BOOKED)
+-- Lấy 2 ghế đầu của showtime 1
 INSERT INTO tickets (booking_id, showtime_seat_id, ticket_code, price)
 SELECT 
     1,
@@ -83,7 +88,7 @@ WHERE sts.showtime_id = 1
 ORDER BY sts.showtime_seat_id
 LIMIT 2;
 
--- mark those seats as BOOKED
+-- update trạng thái ghế thành BOOKED
 UPDATE showtime_seats
 SET status = 'BOOKED'
 WHERE showtime_seat_id IN (
@@ -92,7 +97,7 @@ WHERE showtime_seat_id IN (
 
 -- 10. PAYMENTS
 INSERT INTO payments (booking_id, amount, payment_method, payment_status, paid_at)
-VALUES (1, 200000, 'CREDIT_CARD', 'PAID', NOW());
+VALUES (1, 160000, 'CREDIT_CARD', 'PAID', NOW());
 
 -- 11. AUDIT LOG
 INSERT INTO audit_logs (user_id, action, entity_type, entity_id, detail)

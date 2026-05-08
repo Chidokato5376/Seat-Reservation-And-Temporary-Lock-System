@@ -7,17 +7,17 @@ const lockKey = (showtimeId, seatId) => `lock:seat:${showtimeId}:${seatId}`;
 const metaKey = (showtimeId, seatId) => `meta:seat:${showtimeId}:${seatId}`;
 
 /**
- * Attempt to hold a seat using Redis SETNX (atomic).
- * When multiple users compete simultaneously, only one wins.
+ * Thử giữ ghế bằng Redis SETNX (atomic).
+ * Chỉ 1 user thắng khi nhiều user tranh cùng lúc.
  */
-async function tryLockSeat(showtimeId, seatId, userId) {
+async function tryLockSeat(showtimeId, seatId, userId, seatCode = '') {
   const key = lockKey(showtimeId, seatId);
 
   // SET key value EX ttl NX — atomic SETNX + EXPIRE
   const result = await redis.set(key, String(userId), 'EX', TTL, 'NX');
 
   if (!result) {
-    // Get current lock owner info
+    // Lấy thông tin ai đang giữ
     const owner = await redis.get(key);
     const ttl = await redis.ttl(key);
     return { success: false, heldBy: owner, remainingSeconds: ttl };
@@ -25,19 +25,21 @@ async function tryLockSeat(showtimeId, seatId, userId) {
 
   const expiresAt = Date.now() + TTL * 1000;
 
-  // Store metadata in Redis Hash
+  // Lưu metadata vào Hash
   await redis.hset(metaKey(showtimeId, seatId), {
     userId: String(userId),
     lockedAt: String(Date.now()),
     expiresAt: String(expiresAt),
     status: 'HELD',
+    seatCode: String(seatCode),
   });
   await redis.expire(metaKey(showtimeId, seatId), TTL);
 
-  // Pub/Sub: notify HELD status to all subscribers
+  // Pub/Sub: thông báo HELD tới tất cả subscribers
   await redis.publish('seat:status', JSON.stringify({
     showtimeId: Number(showtimeId),
     seatId: Number(seatId),
+    seatCode: String(seatCode),
     status: 'HELD',
     userId: String(userId),
     expiresAt,
@@ -47,10 +49,12 @@ async function tryLockSeat(showtimeId, seatId, userId) {
 }
 
 /**
- * Release the lock — only the lock owner is allowed to release it.
- * Pass skipPublish = true to suppress the AVAILABLE broadcast
- * (used when immediately following up with a BOOKED broadcast).
+ * Giải phóng lock — chỉ owner mới được release.
  */
+/**
+ * Giải phóng lock — chỉ owner mới được release.
+ */
+// BẠN HÃY KIỂM TRA KỸ DÒNG NÀY: Phải có chữ "skipPublish = false" ở trong ngoặc
 async function releaseLock(showtimeId, seatId, userId, skipPublish = false) {
   const key = lockKey(showtimeId, seatId);
   const owner = await redis.get(key);
@@ -61,11 +65,12 @@ async function releaseLock(showtimeId, seatId, userId, skipPublish = false) {
   await redis.del(key);
   await redis.del(metaKey(showtimeId, seatId));
 
-  // Only publish AVAILABLE if not suppressed
+  // Chỉ phát thông báo AVAILABLE nếu không bị yêu cầu im lặng
   if (!skipPublish) {
     await redis.publish('seat:status', JSON.stringify({
       showtimeId: Number(showtimeId),
       seatId: Number(seatId),
+      seatCode,
       status: 'AVAILABLE',
     }));
   }
@@ -74,7 +79,7 @@ async function releaseLock(showtimeId, seatId, userId, skipPublish = false) {
 }
 
 /**
- * Retrieve seat lock metadata from the Redis Hash.
+ * Lấy metadata của ghế từ Redis Hash.
  */
 async function getSeatMeta(showtimeId, seatId) {
   return redis.hgetall(metaKey(showtimeId, seatId));

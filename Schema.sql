@@ -45,6 +45,7 @@ CREATE TABLE movies (
     genre VARCHAR(100),
     language VARCHAR(50),
     release_date DATE,
+	poster_url TEXT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'NOW_SHOWING',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_duration CHECK (duration_minutes > 0),
@@ -83,6 +84,9 @@ CREATE TABLE users (
     full_name VARCHAR(100),
     email VARCHAR(100) UNIQUE,
     phone VARCHAR(20) UNIQUE,
+	password_hash VARCHAR(255) NOT NULL DEFAULT '',
+	role VARCHAR(20) DEFAULT 'USER',
+    status VARCHAR(20) DEFAULT 'ACTIVE',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

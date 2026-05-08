@@ -69,6 +69,32 @@
       transform: translateY(-2px);
     }
 
+    .password-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+ 
+    .password-wrap input {
+      margin-bottom: 0 !important;
+      padding-right: 46px !important;
+    }
+
+    .toggle-pw {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+      font-size: 16px;
+      user-select: none;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+ 
+    .toggle-pw:hover { color: #aaa; }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -102,15 +128,10 @@
     .movie-poster {
       width: 140px;
       height: 200px;
-      background: #0f0f1a;
       border: 1px solid #3a3a5a;
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #555;
-      text-align: center;
-      font-size: 12px;
+      object-fit: cover;
+      flex-shrink: 0;
     }
 
     .movie-info {
@@ -238,28 +259,46 @@
     }
 
     .seat.available {
-      background: #27ae60;
+      background: #52b788;
       color: #fff;
-      box-shadow: 0 2px 6px rgba(39, 174, 96, 0.4);
+      box-shadow: 0 2px 6px rgba(82, 183, 136, 0.4);
     }
 
-    .seat.held {
-      background: #e67e22;
+    .seat.available.type-vip {
+      background: #c9634a; 
       color: #fff;
-      box-shadow: 0 2px 10px rgba(230, 126, 34, 0.5);
+      box-shadow: 0 2px 6px rgba(201, 99, 74, 0.5); 
+    }
+
+    .seat.available.type-premium {
+      background: #7c6fcd; 
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(124, 111, 205, 0.5); 
+    }
+
+    .seat.available.type-couple {
+      background: #c2699d;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(194, 105, 157, 0.5);
+    } 
+
+    .seat.held {
+      background: #c8963e;
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(200, 150, 62, 0.5);
     }
 
     .seat.booked {
-      background: #c0392b;
+      background: #4a5568;
       color: #fff;
       cursor: not-allowed;
       opacity: 0.8;
     }
 
     .seat.mine {
-      background: #2980b9;
+      background: #4a90b8;
       color: #fff;
-      box-shadow: 0 2px 10px rgba(41, 128, 185, 0.5);
+      box-shadow: 0 2px 10px rgba(74, 144, 184, 0.5);
     }
 
     .seat .seat-label {
@@ -509,7 +548,26 @@
         Khách: <strong>user1</strong>, <strong>user2</strong> | Quản trị: <strong>admin</strong>
       </p>
       <input type="text" id="username-input" placeholder="Nhập username..." value="user1" />
+      <div class="password-wrap">
+        <input type="password" id="password-input" placeholder="Nhập password..." />
+        <span class="toggle-pw" id="toggle-pw" title="Hiện/ẩn mật khẩu">
+          <!-- Icon mắt — SVG để không phụ thuộc emoji -->
+          <svg id="icon-eye" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          <svg id="icon-eye-off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            style="display:none;">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>
+          </svg>
+        </span>
+      </div>
       <button id="login-btn">Vào rạp 🍿</button>
+      <p id="login-error" style="color:#e74c3c; font-size:13px; margin-top:12px; display:none;"></p>
     </div>
   </div>
 
@@ -564,7 +622,7 @@
       <div class="screen">MÀN HÌNH</div>
     </div>
 
-    <div id="legend">
+<!--   <div id="legend">
       <div class="legend-item">
         <div class="legend-box" style="background:#27ae60"></div> Trống
       </div>
@@ -576,6 +634,30 @@
       </div>
       <div class="legend-item">
         <div class="legend-box" style="background:#c0392b"></div> Đã đặt
+      </div>
+    </div> --> 
+
+    <div id="legend" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:16px;">
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#52b788; width:16px; height:16px; border-radius:3px;"></div> Standard
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#c9634a; width:16px; height:16px; border-radius:3px;"></div> VIP
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#7c6fcd; width:16px; height:16px; border-radius:3px;"></div> Premium
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#c2699d; width:16px; height:16px; border-radius:3px;"></div> Couple
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#4a90b8; width:16px; height:16px; border-radius:3px;"></div> Bạn đang giữ
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#c8963e; width:16px; height:16px; border-radius:3px;"></div> Người khác giữ
+      </div>
+      <div class="legend-item" style="font-size:12px; gap:5px;">
+        <div class="legend-box" style="background:#4a5568; width:16px; height:16px; border-radius:3px;"></div> Đã đặt
       </div>
     </div>
 
@@ -672,8 +754,7 @@
     <div
       style="background: #1a1a2e; padding: 30px; border-radius: 10px; width: 350px; text-align: center; border: 1px solid #e94560; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
       <h2 style="color: #fff; margin-bottom: 15px;">Xác nhận Thanh toán</h2>
-      <p style="color:#ccc; font-size: 14px;">Ghế đang chọn: <strong id="modal-seat-code"
-          style="color:#3498db; font-size: 18px;">--</strong></p>
+      <p style="color:#ccc; font-size: 14px;">Ghế đang chọn: <strong id="modal-seat-code" style="color:#3498db; font-size: 18px;">--</strong></p>
       <p style="color:#ccc; margin-bottom: 20px;">Tổng tiền: <strong id="modal-price"
           style="color:#2ecc71; font-size: 24px;">0đ</strong></p>
       <div style="text-align: left; margin-bottom: 20px;">
@@ -707,6 +788,9 @@
     let ME_NAME = '';
     let IS_ADMIN = false;
 
+    // Thêm dòng này vào
+    let ME_TOKEN = null;  // ← lưu token trong memory của tab, không dùng localStorage
+
     let seatsData = [];
     let myLockedSeats = new Set();
     let countdownTimers = {};
@@ -715,20 +799,96 @@
     // ── WebSocket (Khóa tự động kết nối) ──────────
     const socket = io({ autoConnect: false });
 
+    // ── Inactivity Timeout ────────────────────────
+    const INACTIVITY_LIMIT = 300 * 1000; // 300 giây (đổi thành 2*60*1000 khi dùng thật)
+    let inactivityTimer = null;
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(handleInactivityLogout, INACTIVITY_LIMIT);
+    }
+
+    async function handleInactivityLogout() {
+      if (!ME) return;
+      showToast('⏰ Phiên làm việc hết hạn do không hoạt động', 'warn');
+      if (myLockedSeats && myLockedSeats.size > 0) {
+        await releaseAllMyLocksNoAuth();
+      }
+      if (socket.connected) socket.disconnect();
+      localStorage.removeItem('token');
+      ME = null; ME_NAME = ''; IS_ADMIN = false;
+      setTimeout(() => {
+        document.getElementById('top-bar').style.display = 'none';
+        document.getElementById('movie-selection-screen').style.display = 'none';
+        document.getElementById('main-app').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('username-input').value = '';
+        document.getElementById('password-input').value = '';
+        document.getElementById('login-error').style.display = 'none';
+        document.getElementById('password-input').type = 'password';
+        document.getElementById('icon-eye').style.display = '';
+        document.getElementById('icon-eye-off').style.display = 'none';
+      }, 1500);
+    }
+
+    // Nhả ghế không cần token (dùng khi session hết hạn)
+    async function releaseAllMyLocksNoAuth() {
+      for (const seatId of myLockedSeats) {
+        await fetch('/api/seats/release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId, userId: ME }),
+        });
+      }
+      myLockedSeats.clear();
+      showReleaseBtn();
+    }
+
+    // Lắng nghe mọi thao tác để reset timer
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click']
+      .forEach(evt => document.addEventListener(evt, () => {
+        if (ME) resetInactivityTimer();
+      }));
+
+    // ── Toggle hiện/ẩn password ───────────────────
+    document.getElementById('toggle-pw').addEventListener('click', () => {
+      const input = document.getElementById('password-input');
+      const eyeOn  = document.getElementById('icon-eye');
+      const eyeOff = document.getElementById('icon-eye-off');
+      const isHidden = input.type === 'password';
+      input.type       = isHidden ? 'text'     : 'password';
+      eyeOn.style.display  = isHidden ? 'none'  : '';
+      eyeOff.style.display = isHidden ? ''      : 'none';
+    });
+
     // ── Login Logic ───────────────────────────────
     document.getElementById('login-btn').addEventListener('click', async () => {
       const username = document.getElementById('username-input').value.trim();
       if (!username) { alert('Vui lòng nhập username'); return; }
 
+      const password = document.getElementById('password-input').value;
+      const errorEl  = document.getElementById('login-error');
+      errorEl.style.display = 'none';
+ 
+      if (!username || !password) {
+        errorEl.textContent = 'Vui lòng nhập đầy đủ username và password';
+        errorEl.style.display = 'block';
+        return;
+      }
+
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({ username, password })
         });
         const data = await res.json();
 
         if (data.success) {
+          // Lưu JWT token
+          // localStorage.setItem('token', data.token);
+          ME_TOKEN = data.token;
+
           ME = data.user.user_id;
           ME_NAME = data.user.full_name;
 
@@ -743,17 +903,18 @@
           document.getElementById('header-user-role').style.background = IS_ADMIN ? '#8e44ad' : '#e67e22';
           // PHÂN QUYỀN GIAO DIỆN NÚT BẤM
           if (IS_ADMIN) {
-            document.getElementById('admin-reset-btn').style.display  = 'inline-block';
+            document.getElementById('admin-reset-btn').style.display = 'inline-block';
             document.getElementById('admin-report-btn').style.display = 'inline-block';
-            document.getElementById('simulate-btn').style.display     = 'none';
+            document.getElementById('simulate-btn').style.display = 'none';
           } else {
-            document.getElementById('admin-reset-btn').style.display  = 'none';
+            document.getElementById('admin-reset-btn').style.display = 'none';
             document.getElementById('admin-report-btn').style.display = 'none';
-            document.getElementById('simulate-btn').style.display     = 'inline-block';
+            document.getElementById('simulate-btn').style.display = 'inline-block';
           }
 
           // Chuyển sang màn hình chọn phim
           renderMovieSelection();
+          resetInactivityTimer();
         } else {
           alert(data.error);
         }
@@ -761,6 +922,14 @@
         console.error(err);
         alert('Lỗi kết nối tới server!');
       }
+    });
+
+    // Cho phép nhấn Enter để login
+    document.getElementById('password-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('login-btn').click();
+    });
+    document.getElementById('username-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('password-input').focus();
     });
 
     // ── Init App (Chạy sau khi Login) ──────────────
@@ -778,7 +947,11 @@
         document.getElementById('ws-status').style.color = '#e74c3c';
       });
 
+      socket.off('seat:update'); // Đảm bảo không bị trùng lặp sự kiện khi init lại
+
       socket.on('seat:update', (data) => {
+        console.log('WS EVENT:', data);
+
         // MỚI: Nếu là lệnh RESET từ Admin
         if (data.type === 'RESET') {
           showToast('🛠️ Admin vừa khôi phục gốc toàn bộ ghế!', 'warn');
@@ -788,13 +961,23 @@
           return;
         }
 
+        // Thêm xử lý cho batch booking từ người khác
+        if (data.type === 'BATCH_BOOKED') {
+          data.seatIds.forEach(sid => updateSeatUI(sid, 'BOOKED'));
+          const seatText = data.seatCodes?.join(', ') || data.seatIds?.join(', ');
+          addLog(`⚡ Ghế ${seatText} vừa được đặt.`, 'error');
+          updateStats();
+          return;
+        }
+
         // Cũ: Xử lý đổi màu ghế từng cái một
         updateSeatUI(data.seatId, data.status, data.expiresAt, data.userId);
+        const seatlabel = data.seatCode || data.seatId;
         const label = data.status === 'HELD'
-          ? `⏳ Ghế ${data.seatId} bị giữ bởi ${data.userId}`
+          ? `⏳ Ghế ${seatlabel} bị giữ bởi User ${data.userId}`
           : data.status === 'BOOKED'
-            ? `🔴 Ghế ${data.seatId} đã được đặt`
-            : `🟢 Ghế ${data.seatId} vừa được giải phóng`;
+            ? `🔴 Ghế ${seatlabel} đã được đặt`
+            : `🟢 Ghế ${seatlabel} vừa được giải phóng`;
         addLog(label, data.status === 'BOOKED' ? 'error' : data.status === 'HELD' ? 'warn' : 'success');
         updateStats();
       });
@@ -827,8 +1010,11 @@
         const isMine = myLockedSeats.has(numId);
         const status = isMine ? 'mine' : seat.status.toLowerCase();
 
+        // MỚI: Thêm class riêng cho từng loại ghế
+        const typeClass = (status == 'available') ? `type-${seat.seat_type?.toLowerCase() || 'standard'}` : '';
         const btn = document.createElement('button');
-        btn.className = `seat ${status}`;
+        
+        btn.className = `seat ${status} ${typeClass}`.trim();
         btn.id = `seat-${numId}`;
         btn.dataset.seatId = numId;
         btn.dataset.seatCode = seat.seat_code;
@@ -864,8 +1050,10 @@
       const isMine = myLockedSeats.has(id);
       const cssClass = (status === 'HELD' && isMine) ? 'mine'
         : status.toLowerCase();
-
-      btn.className = `seat ${cssClass}`;
+      const seatInfo = seatsData.find(s => Number(s.seat_id) === id);
+      const typeClass = (cssClass === 'available') ? `type-${seatInfo?.seat_type?.toLowerCase() || 'standard'}` : '';
+      
+      btn.className = `seat ${cssClass} ${typeClass}`.trim();
       btn.dataset.status = status;
       btn.dataset.expiresAt = expiresAt || '';
 
@@ -897,7 +1085,10 @@
           if (myLockedSeats.has(Number(seatId))) {
             myLockedSeats.delete(Number(seatId));
             showReleaseBtn();
-            addLog(`⏰ Lock ghế ${seatId} đã hết hạn`, 'warn');
+            const seatInfo = seatsData.find(s => Number(s.seat_id) === Number(seatId));
+            const label = seatInfo?.seat_code || seatId;
+
+            addLog(`⏰ Lock ghế ${label} đã hết hạn`, 'warn');
           }
           updateSeatUI(seatId, 'AVAILABLE');
           updateStats();
@@ -943,10 +1134,20 @@
 
       if (myLockedSeats.has(id)) {
         // THAY ĐỔI: Không gọi bookSeat(id) nữa, mà bật Modal lên!
-        const seatInfo = seatsData.find(s => Number(s.seat_id) === id);
-        document.getElementById('modal-seat-code').textContent = seatInfo.seat_code;
-        document.getElementById('modal-price').textContent = Number(seatInfo.price).toLocaleString() + 'đ';
-        pendingSeatIdToBook = id;
+        // const seatInfo = seatsData.find(s => Number(s.seat_id) === id);
+        // document.getElementById('modal-seat-code').textContent = seatInfo.seat_code;
+        // document.getElementById('modal-price').textContent = Number(seatInfo.price).toLocaleString() + 'đ';
+        // pendingSeatIdToBook = id;
+
+        // document.getElementById('payment-modal').style.display = 'flex';
+        // return;
+        const mySeats = seatsData.filter(s => myLockedSeats.has(Number(s.seat_id)));
+        const seatCodes = mySeats.map(s => s.seat_code).join(', ');
+        const total = mySeats.reduce((sum, s) => sum + Number(s.price), 0);
+
+        document.getElementById('modal-seat-code').textContent = seatCodes;
+        document.getElementById('modal-price').textContent = total.toLocaleString() + 'đ';
+        pendingSeatIdToBook = null; // Không dùng nữa
 
         document.getElementById('payment-modal').style.display = 'flex';
         return;
@@ -964,15 +1165,20 @@
         });
         const data = await res.json();
 
+        const seatInfo = seatsData.find(s => Number(s.seat_id) === id);
+          const label = seatInfo?.seat_code || seatId;
+
         if (data.success) {
           myLockedSeats.add(id);
           updateSeatUI(id, 'HELD', data.expiresAt, ME);
           showReleaseBtn();
-          showToast(`Đã giữ ghế ${seatId} — 30 giây`, 'success');
-          addLog(`✅ Bạn giữ ghế ${seatId}. Click lại để đặt chính thức`, 'success');
+          // showToast(`Đã giữ ghế ${seatId} — 30 giây`, 'success');
+
+          showToast(`Đã giữ ghế ${label} — 30 giây`, 'success');
+          addLog(`✅ Bạn giữ ghế ${label}. Click lại để đặt chính thức`, 'success');
         } else {
           showToast(data.message, 'error');
-          addLog(`❌ Ghế ${seatId}: ${data.message}`, 'error');
+          addLog(`❌ Ghế ${label}: ${data.message}`, 'error');
         }
       } catch (err) {
         addLog(`Lỗi: ${err.message}`, 'error');
@@ -1005,18 +1211,25 @@
     });
 
     document.getElementById('confirm-payment-btn').addEventListener('click', async () => {
-      if (!pendingSeatIdToBook) return;
-      const paymentMethod = document.getElementById('payment-method-select').value;
+      // if (!pendingSeatIdToBook) return;
+      // const paymentMethod = document.getElementById('payment-method-select').value;
 
       // Gọi hàm bookSeat kèm theo paymentMethod
-      await bookSeat(pendingSeatIdToBook, paymentMethod);
+      // await bookSeat(pendingSeatIdToBook, paymentMethod);
 
       // Đóng modal
+      // document.getElementById('payment-modal').style.display = 'none';
+      // pendingSeatIdToBook = null;
+
+      // THAY ĐỔI: Khi confirm thanh toán, sẽ book tất cả ghế đang giữ của mình
+      const paymentMethod = document.getElementById('payment-method-select').value;
+      const seatIds = [...myLockedSeats]; // Lấy tất cả ghế đang giữ
+
+      await bookBatch(seatIds, paymentMethod);
       document.getElementById('payment-modal').style.display = 'none';
-      pendingSeatIdToBook = null;
     });
 
-    async function bookSeat(seatId, paymentMethod) {
+/*    async function bookSeat(seatId, paymentMethod) {
       const id = Number(seatId);
       try {
         const res = await fetch('/api/seats/book', {
@@ -1040,6 +1253,45 @@
         }
       } catch (err) { addLog(`Lỗi: ${err.message}`, 'error'); }
     }
+*/
+
+// Hàm book hàng loạt cho nhiều ghế cùng lúc
+      async function bookBatch(seatIds, paymentMethod) {
+    try {
+      const res = await fetch('/api/seats/book-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatIds, userId: ME, paymentMethod }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        seatIds.forEach(id => {
+          myLockedSeats.delete(id);
+          updateSeatUI(id, 'BOOKED');
+        });
+        showReleaseBtn();
+        showToast(`🎟 Đặt ${data.seatCount} vé thành công! Mã: ${data.bookingCode}`, 'success');
+        addLog(`🎟 Thanh toán ${paymentMethod} — ${data.seatCount} ghế — Mã: ${data.bookingCode} — Tổng: ${data.totalAmount.toLocaleString()}đ`, 'success');
+      } else {
+        // Nhả lock Redis cho tất cả ghế nếu booking thất bại
+        for (const id of seatIds) {
+          await fetch('/api/seats/release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId: id, userId: ME }),
+        });
+        myLockedSeats.delete(id);
+        updateSeatUI(id, 'AVAILABLE'); // Trả ghế về trống
+        };
+        showReleaseBtn();
+        showToast(data.message || 'Đặt ghế thất bại', 'error');
+        addLog(`❌ Batch booking thất bại: ${data.message}`, 'error');
+      }
+    } catch (err) {
+      addLog(`Lỗi: ${err.message}`, 'error');
+    }
+  }
 
     // ── Màn hình Chọn Phim ────────────────────────
     async function renderMovieSelection() {
@@ -1054,7 +1306,7 @@
         const moviesMap = {};
         data.forEach(row => {
           if (!moviesMap[row.movie_id]) {
-            moviesMap[row.movie_id] = { title: row.title, age: row.age_rating, showtimes: [] };
+            moviesMap[row.movie_id] = { title: row.title, age: row.age_rating, posterUrl: row.poster_url, showtimes: [] };
           }
           moviesMap[row.movie_id].showtimes.push({ id: row.showtime_id, time: row.start_time });
         });
@@ -1071,7 +1323,10 @@
 
           container.innerHTML += `
         <div class="movie-card">
-          <div class="movie-poster">Ảnh Poster<br>${movie.title}</div>
+          <img class="movie-poster"
+          src="${movie.posterUrl}"
+          alt="${movie.title}"
+          onerror="this.src=''; this.style.background='#1a1a2e'; this.alt='Không tải được ảnh'">
           <div class="movie-info">
             <h3 class="movie-title">${movie.title} <span class="age-tag">${movie.age}</span></h3>
             <div style="font-weight: bold; color: #888; margin-bottom: 10px; font-size: 14px;">2D Phụ Đề Anh</div>
@@ -1107,8 +1362,15 @@
           body: JSON.stringify({ showtimeId: SHOWTIME_ID, seatId, userId: ME }),
         });
         updateSeatUI(seatId, 'AVAILABLE');
-        addLog(`🔓 Giải phóng ghế ${seatId}`, 'info');
+        const seatInfo = seatsData.find(
+          s => Number(s.seat_id) === Number(seatId)
+        );
+        
+        const label = seatInfo?.seat_code || seatId;
+        
+        addLog(`🔓 Giải phóng ghế ${label}`, 'info');
       }
+      
       myLockedSeats.clear();
       showReleaseBtn();
     }
@@ -1201,6 +1463,7 @@
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => toast.className = '', 3000);
     }
+
     // ── Admin Report Panel ─────────────────────────
     document.getElementById('admin-report-btn').addEventListener('click', () => {
       const panel = document.getElementById('admin-report-panel');
@@ -1243,8 +1506,21 @@
       document.getElementById('rpt-body-held').innerHTML   = '<tr><td colspan="8"  style="text-align:center;color:#555;padding:20px;">Đang tải...</td></tr>';
 
       try {
-        const res  = await fetch(`/api/seats/admin/report/${SHOWTIME_ID}`);
+        const token = ME_TOKEN;
+        const res = await fetch(`/api/seats/admin/report/${SHOWTIME_ID}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await res.json();
+
+        // Kiểm tra response trước khi render
+        if (!res.ok) {
+          throw new Error(data.error || `Lỗi ${res.status}: Không có quyền truy cập`);
+        }
+        if (!Array.isArray(data.booked) || !Array.isArray(data.held)) {
+          throw new Error('Dữ liệu trả về không hợp lệ');
+        }
 
         // ── Render BOOKED tab ──
         document.getElementById('rpt-cnt-booked').textContent = data.booked.length;
@@ -1337,6 +1613,7 @@
     document.getElementById('logout-btn').addEventListener('click', async () => {
       // 1. Nếu người dùng đang giữ ghế mà chưa mua, tự động nhả ra để rạp bán cho người khác
       if (myLockedSeats && myLockedSeats.size > 0) {
+        clearTimeout(inactivityTimer); // Dừng timer khi logout thủ công
         await releaseAllMyLocks();
       }
 
@@ -1346,19 +1623,29 @@
       }
 
       // 3. Reset các biến lưu trữ cục bộ
+      // Xóa JWT token
+      localStorage.removeItem('token');
+
       ME = null;
       ME_NAME = '';
       IS_ADMIN = false;
 
+      ME_TOKEN = null;
+
       // 4. Giấu toàn bộ màn hình App đi, bật lại màn hình Login
-      document.getElementById('top-bar').style.display           = 'none';
+      document.getElementById('top-bar').style.display = 'none';
       document.getElementById('movie-selection-screen').style.display = 'none';
-      document.getElementById('main-app').style.display          = 'none';
+      document.getElementById('main-app').style.display = 'none';
       document.getElementById('admin-report-panel').style.display = 'none';
-      document.getElementById('login-screen').style.display      = 'flex';
+      document.getElementById('login-screen').style.display = 'flex';
 
       // 5. Làm sạch ô nhập liệu username để người sau vào
       document.getElementById('username-input').value = '';
+      document.getElementById('password-input').value = '';
+      document.getElementById('login-error').style.display = 'none';
+      document.getElementById('password-input').type = 'password';
+      document.getElementById('icon-eye').style.display = '';
+      document.getElementById('icon-eye-off').style.display = 'none';
 
       showToast('👋 Đã đăng xuất thành công!', 'success');
     });
